@@ -96,6 +96,31 @@
   .author div{font-size:clamp(12px,3.2vw,14.5px);line-height:1.5}
   @media (min-width:760px){ .author img{width:92px;height:92px} }
   @media (max-height:620px){ .shot img.kids{max-height:38vh} }
+
+  /* ---------- app opens inside the page ---------- */
+  #frameWrap{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;background:var(--board)}
+  #frameWrap.on{display:flex}
+  #bar{
+    flex:0 0 auto;position:relative;display:flex;align-items:center;gap:10px;
+    padding:calc(6px + env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 6px
+            max(10px,env(safe-area-inset-left));
+    background:var(--paper);border-bottom:3px solid var(--ink);
+  }
+  #bar .name{
+    flex:1;min-width:0;font-size:clamp(12px,3.4vw,17px);font-weight:bold;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  #bar .home{
+    flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
+    font-family:var(--font-hand);font-weight:bold;font-size:clamp(11px,3vw,15px);color:#241505;
+    padding:8px 14px;min-height:44px;border:3px solid var(--ink);border-radius:12px;
+    background:#FFD200;box-shadow:0 3px 0 var(--ink);cursor:pointer;
+  }
+  #bar .home:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+  #bar .home:focus-visible{outline:3px solid #E8112D;outline-offset:2px}
+  #bar .home svg{width:18px;height:18px;display:block}
+  @media (max-width:380px){ #bar .home span{display:none} #bar .home{padding:8px 11px} }
+  #frame{flex:1;min-height:0;width:100%;border:0;display:block;background:#fff}
 </style>
 </head>
 <body>
@@ -113,8 +138,8 @@
 <div id="app">
 <header>
   <h1>Children's Apps</h1>
-  <p>Tap one to open it. Keep this page in the same folder as the apps and every link will work,
-     on a phone, a tablet or a laptop, with no internet.</p>
+  <p>Tap one to open it. Every app has a <strong>Menu</strong> button in its top right corner to
+     come back here. Works on a phone, a tablet or a laptop, with no internet.</p>
 </header>
 
 <main>
@@ -217,6 +242,19 @@
 </footer>
 </div>
 
+<div id="frameWrap">
+  <div id="bar">
+    <div class="name" id="frameName"></div>
+    <button class="home" id="backBtn" aria-label="Back to the main menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 11.2 12 3l9 8.2" fill="none" stroke="#241505" stroke-width="2.4"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 10.5V20h12v-9.5" fill="none" stroke="#241505" stroke-width="2.4"
+              stroke-linecap="round" stroke-linejoin="round"/></svg><span>Menu</span></button>
+  </div>
+  <iframe id="frame" title="App" allow="autoplay"></iframe>
+</div>
+
 <script>
   var splash=document.getElementById("splash"), app=document.getElementById("app");
   function open_(){ splash.classList.add("gone"); app.classList.add("on"); window.scrollTo(0,0); }
@@ -224,6 +262,62 @@
   document.addEventListener("keydown",function(e){
     if(!splash.classList.contains("gone") && (e.key==="Enter"||e.key===" ")) open_();
   });
+
+  /* every app opens in the frame below the bar, so only this page needs the Menu button */
+  var wrap=document.getElementById("frameWrap"), frame=document.getElementById("frame"),
+      fname=document.getElementById("frameName"), current="";
+
+  function openApp(file,title,push){
+    current=file; fname.textContent=title||"";
+    frame.setAttribute("src",file);
+    wrap.classList.add("on");
+    document.body.style.overflow="hidden";
+    if(push!==false){ try{ history.pushState({app:file},"","#"+file); }catch(e){} }
+  }
+  function closeApp(push){
+    wrap.classList.remove("on");
+    frame.removeAttribute("src");          /* stops any sound and frees memory */
+    current=""; fname.textContent="";
+    document.body.style.overflow="";
+    if(push!==false){ try{ history.pushState({},"",location.pathname); }catch(e){} }
+  }
+  document.getElementById("backBtn").addEventListener("click",function(){ closeApp(); });
+
+  /* an app's own Menu button would load this page inside the frame - catch that and close instead */
+  frame.addEventListener("load",function(){
+    var u="";
+    try{ u=frame.contentWindow.location.pathname||""; }catch(e){ return; }
+    if(/(^|\/)index\.html?$/.test(u) || /\/$/.test(u)) closeApp();
+  });
+
+  /* the phone's back gesture and the laptop's back button leave the app */
+  window.addEventListener("popstate",function(e){
+    if(e.state && e.state.app) openApp(e.state.app,fname.textContent,false);
+    else closeApp(false);
+  });
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape" && wrap.classList.contains("on")) closeApp();
+  });
+
+  /* turn every card into a frame link */
+  document.querySelectorAll("a.app").forEach(function(a){
+    a.addEventListener("click",function(ev){
+      ev.preventDefault();
+      var t=a.querySelector("h3");
+      open_();
+      openApp(a.getAttribute("href"), t?t.textContent:"");
+    });
+  });
+
+  /* opening index.html#some-app.html goes straight into that app */
+  (function(){
+    var h=(location.hash||"").replace(/^#/,"");
+    if(/^[\w.-]+\.html?$/.test(h)){
+      open_();
+      var card=document.querySelector('a.app[href="'+h+'"]');
+      openApp(h, card && card.querySelector("h3") ? card.querySelector("h3").textContent : "", false);
+    }
+  })();
 </script>
 </body>
 </html>
