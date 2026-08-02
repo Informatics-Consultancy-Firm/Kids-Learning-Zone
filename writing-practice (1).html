@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sillah Kanu Series — Writing Practice</title>
+<style>
+  :root{
+    --paper:#FFFDF6;
+    --board:#F3EAD6;
+    --ink:#1A1A1A;
+    --rule:#D8CBAE;
+    --tray:#3E2A18;
+    --tray2:#573A21;
+    --cw:44px;
+    --font-hand:"Comic Sans MS","Chalkboard SE","Segoe Print","Trebuchet MS",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:var(--font-hand);background:var(--board);color:var(--ink);
+    overflow:hidden;-webkit-text-size-adjust:100%;
+  }
+  .shell{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  .col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+
+  header{
+    flex:0 0 auto;text-align:center;padding:7px 10px;
+    background:var(--paper);border-bottom:3px solid var(--ink);
+  }
+  header h1{
+    margin:0;font-size:clamp(13px,3.6vw,24px);line-height:1.2;
+    text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;
+  }
+  header p{margin:4px 0 0;font-size:clamp(10px,2.6vw,13px);color:#6B5A42}
+
+  .sets{
+    flex:0 0 auto;display:flex;gap:8px;justify-content:center;
+    padding:6px 8px 0;background:var(--paper);
+  }
+  .sets button{
+    font-family:var(--font-hand);font-size:clamp(12px,3.2vw,16px);
+    padding:6px 18px;border:2px solid var(--ink);border-radius:20px;
+    background:#fff;cursor:pointer;opacity:.65;
+  }
+  .sets button[aria-pressed="true"]{
+    opacity:1;background:#FFE9A8;box-shadow:0 3px 0 var(--ink);transform:translateY(-2px);
+  }
+  .strip{
+    flex:0 0 auto;display:flex;gap:5px;overflow-x:auto;padding:6px 8px;
+    background:var(--paper);border-bottom:2px solid var(--rule);scrollbar-width:none;
+  }
+  .strip::-webkit-scrollbar{display:none}
+  .strip button{
+    flex:0 0 auto;min-width:38px;height:34px;padding:0 6px;border-radius:9px;
+    border:2px solid var(--ink);background:#fff;
+    font-family:var(--font-hand);font-size:15px;font-weight:bold;cursor:pointer;
+  }
+  .strip button[aria-current="true"]{background:var(--ink);color:#fff}
+  .strip button.done{background:#FFE9A8}
+  .strip button.done[aria-current="true"]{background:var(--ink);color:#fff}
+
+  main{flex:1;min-width:0;min-height:0;display:flex;justify-content:center;padding:8px;overflow:hidden}
+  .card{
+    flex:1;min-width:0;min-height:0;max-width:900px;width:100%;
+    display:flex;flex-direction:column;gap:8px;
+    background:var(--paper);border:3px solid var(--ink);border-radius:14px;padding:10px;
+  }
+
+  .head{flex:0 0 auto;text-align:center}
+  .phrase{display:inline;margin:0;font-size:clamp(16px,4.6vw,28px);vertical-align:middle}
+  .say{
+    display:inline-block;vertical-align:middle;margin-left:9px;cursor:pointer;
+    width:clamp(30px,8vw,40px);height:clamp(30px,8vw,40px);
+    border:2px solid var(--ink);border-radius:50%;background:#FFF3D0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 9h4l5-4v14l-5-4H4z' fill='%231A1A1A'/><path d='M16.5 8.5c1.8 1.8 1.8 5.2 0 7M19.5 6c3 3 3 9 0 12' stroke='%231A1A1A' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:center;background-size:60% 60%;
+  }
+  .say:active{background-color:#FFE08A}
+  .say:disabled{opacity:.4;cursor:default}
+
+  .sheet{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+  canvas{
+    display:block;background:#fff;touch-action:none;cursor:crosshair;
+    border:2px dashed var(--rule);border-radius:10px;
+  }
+  .cheer{
+    position:absolute;left:50%;top:10px;transform:translateX(-50%);
+    background:#FFE9A8;border:3px solid var(--ink);border-radius:20px;
+    padding:5px 16px;font-size:clamp(14px,3.6vw,20px);
+    opacity:0;transition:opacity .25s ease;pointer-events:none;
+  }
+  .cheer.show{opacity:1}
+
+  .bar{flex:0 0 auto;display:flex;align-items:center;gap:8px}
+  .meter{
+    flex:1;height:14px;background:#fff;border:2px solid var(--ink);border-radius:9px;overflow:hidden;
+  }
+  .meter i{display:block;height:100%;width:0;background:#1FA13A;transition:width .15s linear}
+  .bar span{font-size:clamp(11px,3vw,14px);min-width:44px;text-align:right}
+
+  .pager{flex:0 0 auto;display:flex;gap:8px}
+  .pager button{
+    flex:1;font-family:var(--font-hand);font-size:clamp(14px,3.6vw,18px);padding:9px;
+    border:3px solid var(--ink);border-radius:11px;background:#fff;cursor:pointer;
+  }
+  .pager button:disabled{opacity:.4;cursor:default}
+
+  .tray{
+    flex:0 0 auto;background:linear-gradient(var(--tray2),var(--tray));
+    border-top:4px solid #241505;padding:6px 8px max(8px,env(safe-area-inset-bottom));
+  }
+  .traytop{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:4px}
+  .traytop p{margin:0;color:#FFE9C4;font-size:clamp(10px,2.8vw,13px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .traytop p .swatch{
+    display:inline-block;width:14px;height:14px;border-radius:4px;
+    border:2px solid #FFE9C4;vertical-align:-3px;margin-right:5px;
+  }
+  .tools{flex:0 0 auto;display:flex;gap:6px}
+  .tools button{
+    font-family:var(--font-hand);font-size:clamp(11px,3vw,14px);padding:6px 9px;
+    border:2px solid #241505;border-radius:9px;background:#FFE9C4;cursor:pointer;
+  }
+  .crayons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;padding:11px 0 5px}
+  .crayon{
+    flex:0 0 auto;border:0;background:none;cursor:pointer;padding:3px 3px 2px;border-radius:12px;
+    opacity:.62;transform:translateY(9px) scale(.9);
+    transition:transform .14s ease, opacity .14s ease, background .14s ease;
+  }
+  .crayon svg{display:block;width:var(--cw);height:calc(var(--cw) * 2.18)}
+  .crayon[aria-pressed="true"]{
+    opacity:1;transform:translateY(-5px) scale(1.05);
+    background:#FFE9C4;box-shadow:0 3px 0 #241505;
+  }
+  .crayon[aria-pressed="true"]::after{
+    content:"\2713";display:block;text-align:center;line-height:1;
+    font-size:calc(var(--cw) * .34);color:#241505;
+  }
+
+  @media (min-width:700px){ :root{--cw:54px} .card{padding:14px;gap:10px} }
+  @media (min-width:1100px){ :root{--cw:60px} }
+  @media (max-height:720px) and (orientation:portrait){ :root{--cw:34px} header p{display:none} }
+  @media (max-height:560px) and (orientation:landscape){
+    :root{--cw:30px}
+    .shell{flex-direction:row}
+    header p{display:none}
+    header{padding:4px 8px}
+    main{padding:5px}
+    .card{padding:8px;gap:5px}
+    .strip{padding:4px 6px}
+    .sets{padding:3px 6px 0;gap:6px}
+    .sets button{padding:3px 10px;font-size:12px}
+    header h1{font-size:12px}
+    .strip button{min-width:32px;height:30px;font-size:14px}
+    .pager button{padding:5px;font-size:13px}
+    .tray{width:124px;border-top:0;border-left:4px solid #241505;display:flex;flex-direction:column;padding:6px}
+    .traytop{flex-direction:column;margin:0 0 4px}
+    .traytop p{display:none}
+    .tools{flex-direction:column;width:100%}
+    .tools button{width:100%}
+    .crayons{flex-direction:row;flex-wrap:wrap;align-content:flex-start;justify-content:center;gap:6px;padding:6px 0 0;overflow-y:auto}
+    .crayon{transform:scale(.9)}
+    .crayon[aria-pressed="true"]{transform:translateY(-4px)}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="col">
+
+<header>
+  <h1>Sillah Kanu Series — Writing Practice</h1>
+  <p>Trace the number with your finger to fill it with colour</p>
+</header>
+
+<div class="sets" id="sets" role="group" aria-label="Choose numbers or letters">
+  <button data-set="numbers" aria-pressed="true">1 &ndash; 30</button>
+  <button data-set="letters" aria-pressed="false">A &ndash; Z</button>
+</div>
+
+<nav class="strip" id="strip" aria-label="Choose what to trace"></nav>
+
+<main>
+  <div class="card">
+    <div class="head">
+      <p class="phrase" id="phrase"></p>
+      <button class="say" id="say" aria-label="Hear the number" title="Hear the number"></button>
+    </div>
+    <div class="sheet" id="sheet">
+      <canvas id="pad"></canvas>
+      <div class="cheer" id="cheer">Well done!</div>
+    </div>
+    <div class="bar">
+      <div class="meter"><i id="meter"></i></div>
+      <span id="pct">0%</span>
+    </div>
+    <div class="pager">
+      <button id="prev">&#8592; Back</button>
+      <button id="next">Next &#8594;</button>
+    </div>
+  </div>
+</main>
+
+</div><!-- /col -->
+
+<div class="tray">
+  <div class="traytop">
+    <p id="hint"></p>
+    <div class="tools">
+      <button id="clear">Start again</button>
+    </div>
+  </div>
+  <div class="crayons" id="crayons"></div>
+</div>
+
+</div><!-- /shell -->
+
+<script>
+/* ================= crayons ================= */
+const COLOURS = {red:"#E8112D", blue:"#1E90FF", green:"#1FA13A", purple:"#7A1FD1",
+                 orange:"#F5821F", pink:"#FF3EA5"};
+const NAMES   = {red:"red", blue:"blue", green:"green", purple:"purple",
+                 orange:"orange", pink:"pink"};
+const ORDER = Object.keys(COLOURS);
+let pick = COLOURS.red;
+
+/* ================= what there is to trace ================= */
+const NUMBERS = [];
+for(let n=1; n<=30; n++) NUMBERS.push(String(n));
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const SOUND = {A:"ay", B:"bee", C:"see", D:"dee", E:"ee", F:"eff", G:"jee", H:"aitch",
+  I:"eye", J:"jay", K:"kay", L:"ell", M:"em", N:"en", O:"oh", P:"pee", Q:"cue", R:"ar",
+  S:"ess", T:"tee", U:"you", V:"vee", W:"double you", X:"ex", Y:"why", Z:"zed"};
+
+const NUMWORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+  "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen",
+  "twenty","twenty one","twenty two","twenty three","twenty four","twenty five","twenty six",
+  "twenty seven","twenty eight","twenty nine","thirty"];
+
+let setName = "numbers";
+let PAGES = NUMBERS;
+let current = 0;                 // index into PAGES
+let booted = false;
+const filled = {};               // "set:index" -> how much has been traced
+const traced = {};               // "set:index" -> saved finger strokes
+function key(i){ return setName + ":" + i; }
+function spoken(i){
+  return setName === "numbers" ? NUMWORDS[Number(PAGES[i])] : "the letter " + SOUND[PAGES[i]];
+}
+
+/* ================= speaking ================= */
+const canSpeak = "speechSynthesis" in window;
+let voice = null;
+function pickVoice(){
+  if(!canSpeak) return null;
+  let vs = [];
+  try { vs = speechSynthesis.getVoices() || []; } catch(e){ return null; }
+  const en = vs.filter(v => /^en/i.test(v.lang || ""));
+  return en.find(v => /GB|UK/i.test(v.lang)) || en[0] || vs[0] || null;
+}
+if(canSpeak){
+  voice = pickVoice();
+  try { speechSynthesis.onvoiceschanged = ()=>{ voice = pickVoice(); }; } catch(e){}
+}
+function say(t){
+  if(!canSpeak) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.rate = .8; u.pitch = 1.15; u.lang = (voice && voice.lang) || "en-GB";
+    if(voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ================= the tracing pad ================= */
+const pad   = document.getElementById("pad");
+const sheet = document.getElementById("sheet");
+const ctx   = pad.getContext("2d");
+const mask  = document.createElement("canvas");     // the number, filled solid
+const mctx  = mask.getContext("2d", {willReadFrequently:true});
+const paint = document.createElement("canvas");     // what the finger has drawn
+const pctx  = paint.getContext("2d");
+const shown = document.createElement("canvas");     // paint kept inside the number
+const sctx  = shown.getContext("2d", {willReadFrequently:true});
+
+let W = 0, H = 0, dpr = 1, glyphPixels = 0;
+const FONT = '"Arial Rounded MT Bold","Trebuchet MS",Verdana,sans-serif';
+
+function layout(){
+  const box = sheet.getBoundingClientRect();
+  if(box.width < 20 || box.height < 20) return;
+  const r = 4/3;
+  let w = box.width, h = w / r;
+  if(h > box.height){ h = box.height; w = h * r; }
+  w = Math.floor(w); h = Math.floor(h);
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  pad.style.width = w + "px"; pad.style.height = h + "px";
+  W = Math.floor(w*dpr); H = Math.floor(h*dpr);
+  [pad, mask, paint, shown].forEach(c=>{ c.width = W; c.height = H; });
+  buildGlyph();
+  restore();
+}
+let layoutTimer = null;
+window.addEventListener("resize", ()=>{ clearTimeout(layoutTimer); layoutTimer = setTimeout(layout, 90); });
+window.addEventListener("orientationchange", ()=>setTimeout(layout, 140));
+
+function restore(){
+  const saved = traced[key(current)];
+  if(!saved){ redraw(); measure(); return; }
+  const img = new Image();
+  img.onload = ()=>{ pctx.clearRect(0,0,W,H); pctx.drawImage(img, 0, 0, W, H); redraw(); measure(); };
+  img.onerror = ()=>{ redraw(); measure(); };
+  img.src = saved;
+}
+
+function glyphFont(){
+  // the biggest size of this number that fits the paper with a margin
+  let size = H * 0.8;
+  mctx.font = "bold " + size + "px " + FONT;
+  const w = mctx.measureText(PAGES[current]).width;
+  const maxW = W * 0.78;
+  if(w > maxW) size = size * maxW / w;
+  return "bold " + Math.floor(size) + "px " + FONT;
+}
+
+function buildGlyph(){
+  const f = glyphFont();
+  mctx.clearRect(0,0,W,H);
+  mctx.font = f; mctx.textAlign = "center"; mctx.textBaseline = "middle";
+  mctx.fillStyle = "#000";
+  mctx.fillText(PAGES[current], W/2, H/2);
+  // how many pixels the number covers, sampled — used for the progress bar
+  const d = mctx.getImageData(0,0,W,H).data;
+  let n = 0;
+  for(let i=3; i<d.length; i+=16) if(d[i] > 40) n++;
+  glyphPixels = Math.max(1, n);
+}
+
+function redraw(){
+  const f = glyphFont();
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,W,H);
+  // faint guide lines, like the ruled page in the book
+  ctx.strokeStyle = "#EFE6D2"; ctx.lineWidth = 2*dpr;
+  ctx.beginPath();
+  ctx.moveTo(0, H*0.22); ctx.lineTo(W, H*0.22);
+  ctx.moveTo(0, H*0.78); ctx.lineTo(W, H*0.78);
+  ctx.stroke();
+  // what the child has traced, kept inside the number
+  sctx.clearRect(0,0,W,H);
+  sctx.drawImage(paint, 0, 0);
+  sctx.globalCompositeOperation = "destination-in";
+  sctx.drawImage(mask, 0, 0);
+  sctx.globalCompositeOperation = "source-over";
+  ctx.drawImage(shown, 0, 0);
+  // the empty number on top: broken outline, like the book
+  ctx.save();
+  ctx.font = f; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.setLineDash([14*dpr, 11*dpr]);
+  ctx.lineWidth = 3*dpr; ctx.strokeStyle = "#8A7B60";
+  ctx.strokeText(PAGES[current], W/2, H/2);
+  ctx.restore();
+}
+
+/* ---------- drawing with a finger ---------- */
+let drawing = false, lastX = 0, lastY = 0;
+function pos(e){
+  const r = pad.getBoundingClientRect();
+  return [ (e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height) ];
+}
+function strokeTo(x, y){
+  pctx.strokeStyle = pick;
+  pctx.lineWidth = Math.max(18, H*0.09);
+  pctx.lineCap = "round"; pctx.lineJoin = "round";
+  pctx.beginPath(); pctx.moveTo(lastX, lastY); pctx.lineTo(x, y); pctx.stroke();
+  lastX = x; lastY = y;
+}
+pad.addEventListener("pointerdown", e=>{
+  drawing = true; pad.setPointerCapture(e.pointerId);
+  [lastX, lastY] = pos(e);
+  strokeTo(lastX + 0.01, lastY);          // a tap leaves a dot
+  redraw(); measure();
+});
+pad.addEventListener("pointermove", e=>{
+  if(!drawing) return;
+  const [x,y] = pos(e);
+  strokeTo(x, y); redraw();
+});
+pad.addEventListener("pointerup", e=>{
+  if(!drawing) return;
+  drawing = false; measure(); save();
+});
+pad.addEventListener("pointercancel", ()=>{ if(drawing){ drawing = false; measure(); save(); } });
+
+/* ---------- how much of the number is filled ---------- */
+function measure(){
+  const d = sctx.getImageData(0,0,W,H).data;
+  let n = 0;
+  for(let i=3; i<d.length; i+=16) if(d[i] > 40) n++;
+  const p = Math.max(0, Math.min(100, Math.round(100 * n / glyphPixels)));
+  filled[key(current)] = p;
+  document.getElementById("meter").style.width = p + "%";
+  document.getElementById("pct").textContent = p + "%";
+  const cheer = document.getElementById("cheer");
+  if(p >= 85){
+    if(!cheer.classList.contains("show")){
+      cheer.classList.add("show");
+      say("Well done! That is " + spoken(current));
+    }
+  } else {
+    cheer.classList.remove("show");
+  }
+  markStrip();
+}
+function save(){ try{ traced[key(current)] = paint.toDataURL(); }catch(e){} }
+
+/* ================= the number strip ================= */
+const strip = document.getElementById("strip");
+function buildStrip(){
+  strip.innerHTML = "";
+  PAGES.forEach((n,i)=>{
+    const b = document.createElement("button");
+    b.textContent = n; b.dataset.i = i;
+    b.onclick = ()=>show(i);
+    strip.appendChild(b);
+  });
+}
+
+const sets = document.getElementById("sets");
+[...sets.children].forEach(btn=>{
+  btn.onclick = ()=>{
+    if(btn.dataset.set === setName) return;
+    setName = btn.dataset.set;
+    PAGES = setName === "numbers" ? NUMBERS : LETTERS;
+    [...sets.children].forEach(o=>o.setAttribute("aria-pressed", o.dataset.set === setName));
+    buildStrip();
+    show(0);
+  };
+});
+function markStrip(){
+  [...strip.children].forEach((b,i)=>{
+    b.setAttribute("aria-current", i === current);
+    b.classList.toggle("done", (filled[setName + ":" + i] || 0) >= 85);
+  });
+}
+
+/* ================= crayons ================= */
+const crayonBox = document.getElementById("crayons");
+function crayonSVG(hex){
+  return `<svg viewBox="0 0 34 74" aria-hidden="true">
+    <path d="M17,2 L27,20 L27,70 L7,70 L7,20 Z" fill="${hex}" stroke="#241505" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M17,2 L27,20 L20,20 L17,2 Z" fill="rgba(0,0,0,.22)"/>
+    <rect x="7" y="34" width="20" height="12" fill="rgba(255,255,255,.35)"/>
+  </svg>`;
+}
+ORDER.forEach(name=>{
+  const b = document.createElement("button");
+  b.className = "crayon"; b.title = name;
+  b.innerHTML = crayonSVG(COLOURS[name]);
+  b.setAttribute("aria-label", name + " crayon");
+  b.onclick = ()=>{ pick = COLOURS[name]; markCrayons(); };
+  crayonBox.appendChild(b);
+});
+function markCrayons(){
+  [...crayonBox.children].forEach(b=> b.setAttribute("aria-pressed", COLOURS[b.title] === pick));
+  const name = ORDER.find(n => COLOURS[n] === pick) || "red";
+  document.getElementById("hint").innerHTML =
+    '<span class="swatch" style="background:' + pick + '"></span>Using <b>' + NAMES[name] + '</b>';
+}
+
+/* ================= showing a page ================= */
+function show(i){
+  current = i;
+  const n = PAGES[i];
+  document.getElementById("phrase").innerHTML = setName === "numbers"
+    ? 'Trace <b>' + n + '</b> &mdash; ' + NUMWORDS[Number(n)]
+    : 'Trace the letter <b>' + n + '</b>';
+  document.getElementById("cheer").classList.remove("show");
+  pctx.clearRect(0,0,W,H);
+  layout();
+  markStrip();
+  document.getElementById("prev").disabled = i === 0;
+  document.getElementById("next").disabled = i === PAGES.length - 1;
+  const tab = strip.children[i];
+  if(tab && tab.scrollIntoView) tab.scrollIntoView({inline:"center", block:"nearest", behavior:"smooth"});
+  if(booted) say(spoken(i));
+}
+
+document.getElementById("clear").onclick = ()=>{
+  pctx.clearRect(0,0,W,H);
+  traced[key(current)] = null;
+  redraw(); measure();
+};
+document.getElementById("say").onclick = ()=>say(spoken(current));
+if(!canSpeak) document.getElementById("say").disabled = true;
+document.getElementById("prev").onclick = ()=>{ if(current > 0) show(current-1); };
+document.getElementById("next").onclick = ()=>{ if(current < PAGES.length-1) show(current+1); };
+
+markCrayons();
+buildStrip();
+show(0);
+booted = true;
+</script>
+</body>
+</html>
